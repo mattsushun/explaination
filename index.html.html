@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緩和医療コミュニケーション道場クイズ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .quiz-container {
+            max-width: 800px;
+            width: 95%;
+        }
+        .modal-content-area {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-container" class="quiz-container mx-auto">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-xl shadow-lg">
+            <h1 class="text-3xl font-bold text-slate-800 mb-4">緩和医療コミュニケーション道場</h1>
+            <p class="text-slate-600 mb-8">終末期医療の現場で、患者さんの心に寄り添う「匠の一言」を学ぶクイズです。10のシナリオを通して、対話の技術を磨きましょう。</p>
+            <button id="start-button" class="w-full bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-700 transition-colors text-lg">
+                クイズを始める
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                <div class="mb-6">
+                    <p id="question-number" class="text-cyan-600 font-bold text-lg">第1問</p>
+                    <h2 id="scenario" class="text-xl font-bold text-slate-800 mt-2 leading-relaxed"></h2>
+                </div>
+                <div id="question-text" class="bg-slate-50 p-4 rounded-lg mb-6 text-slate-700 leading-relaxed font-bold"></div>
+                
+                <!-- Button to show options -->
+                <div id="show-options-container" class="text-center mb-6">
+                     <button id="show-options-button" class="w-full sm:w-auto bg-amber-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-amber-600 transition-colors text-lg">
+                        選択肢を提示する
+                    </button>
+                </div>
+
+                <!-- Options container, initially hidden -->
+                <div id="options-container" class="space-y-4 hidden"></div>
+            </div>
+        </div>
+
+        <!-- Result Modal -->
+        <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0" id="modal-content">
+                <div class="p-6 sm:p-8">
+                    <h2 id="result-title" class="text-3xl font-bold mb-4"></h2>
+                    <div class="modal-content-area pr-4">
+                        <div id="explanation" class="text-slate-700 space-y-6"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-6 py-4 rounded-b-xl">
+                    <button id="next-button" class="w-full bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-700 transition-colors">次の問題へ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Score Screen -->
+        <div id="final-score-screen" class="hidden text-center bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">クイズ終了</h2>
+            <p class="text-lg text-slate-600 mb-6">お疲れ様でした！</p>
+            <p class="text-5xl font-bold text-cyan-600 mb-6" id="final-score"></p>
+            <p class="text-slate-600 mb-8">これからも患者さんの心に寄り添うコミュニケーションを大切にしてください。</p>
+            <button id="restart-button" class="w-full bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-700 transition-colors text-lg">
+                もう一度挑戦する
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                questionNumber: 1,
+                scenario: "進行した肺がんを患う60代の男性、鈴木さん。今日の診察で初めて真剣な表情であなたにこう尋ねました。「先生、正直なところ、私はあとどのくらい生きられるのでしょうか…？はっきり言ってください」",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "奇跡を信じて頑張りましょう",
+                    "未来には幅があるんです",
+                    "治すことは難しいですが、痛みや症状を和らげる方法があります",
+                    "抗癌剤は諸刃の剣ですから、今後の治療次第ですね"
+                ],
+                correctAnswer: 1,
+                explanation: {
+                    title: "フレーズ1：「未来には幅がある」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">人間の脳は、不確実性を嫌う一方で、完全に希望を断たれることにも強く抵抗します。このフレーズは、「分からない」という不確実性を認めつつも、「複数の可能性がある」という形で脳に解釈の余地を与えます。これにより、希望を維持するための認知的な逃げ道（良い可能性）を確保しつつ、現実（悪い可能性）から目を逸らさずに済みます。これを心理学では「アンビギュイティ・トレランス（曖昧さへの耐性）」を支援するアプローチと呼び、絶望による思考停止を防ぎます。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">この言葉の後に、「例えば、統計的には数ヶ月という方が多いですが、中には年単位で元気に過ごされる方もいます。個人差がとても大きいのです」と具体的な幅のイメージを添えると、より誠実さが伝わります。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>患者が「はぐらかされた」と感じていないか、表情や声のトーンを注意深く観察しましょう。もし不満そうであれば、「曖昧な言い方で申し訳ありません。ただ、断言することが医学的に不誠実になってしまうのです」と、なぜ幅のある言い方をするのかという理由を丁寧に説明することが重要です。また、具体的な数字を強く求める患者には、統計的な中央値や範囲を示した上で、それが個人に当てはまるとは限らないことを強調します。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 2,
+                scenario: "肝機能の低下で全身の倦怠感が強い患者さんから、「どうしてこんなに体がだるいんでしょうか？肝臓が悪いと、なぜ疲れるんですか？」と質問されました。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "肝臓は身体の電池のようなものです",
+                    "肝臓は体のエンジンです",
+                    "肝臓は体全体の司令塔です",
+                    "肝臓は体の中の関所のような役割をしています"
+                ],
+                correctAnswer: 0,
+                explanation: {
+                    title: "フレーズ2：「肝臓は身体の電池です」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">脳は、新しい情報や抽象的な概念を、既知の具体的なイメージ（スキーマ）と結びつけることで効率的に理解します。これを「メタファー（比喩）思考」と呼びます。「肝臓」という内臓の機能は目に見えず抽象的ですが、「電池」は誰もが知る具体的なものです。「エネルギーを蓄え、供給する」という肝臓の主要な機能と、「電池が切れると動かなくなる」という日常的な体験が結びつくことで、認知的な負荷が大幅に下がり、直感的な理解が生まれます。これにより、患者は自身の症状に納得感を持ちやすくなります。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「携帯電話の電池が残り少ないと、動きが遅くなりますよね。それと同じで、肝臓の電池が弱ると体がだるく感じるんですよ」と、さらに身近な例を出すとイメージが湧きやすくなります。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>この比喩はエネルギー貯蔵の側面に特化しています。もし患者が解毒作用など他の機能について尋ねてきた場合は、「電池の役割に加えて、体の中のゴミを処理する工場のような働きもあるんですよ」と、別の比喩を追加して説明を補いましょう。また、医学知識が豊富な患者には、物足りなく感じられる可能性もあるため、相手の理解度に合わせて使うことが大切です。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 3,
+                scenario: "抗がん剤の効果が頭打ちになり、あなたは「これ以上の治療は負担が大きいので、緩和ケアに力を入れましょう」と提案しました。すると患者さんは、「緩和ケアなんて…まだ諦めたくありません」と強い口調で返しました。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "一緒に今後の目標を決めていきましょう",
+                    "このままだと、もっと辛い症状が出てきますよ",
+                    "元気なうちに緩和ケアを始めましょう。私が後悔したくないんです",
+                    "抗癌剤は諸刃の剣ですからね"
+                ],
+                correctAnswer: 2,
+                explanation: {
+                    title: "フレーズ3：「元気なうちに緩和ケア。私が後悔したくない」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">人間は、他者の感情、特に「後悔」のような強い感情に共感し、それを回避しようとする社会的・感情的な脳の仕組みを持っています。医師が自身の「後悔したくない」という本音を真摯に伝えることで、患者は「自分のために、医師がこれほど真剣に考えてくれている」と感じ、信頼関係が深まります。これは「情動感染」の一種であり、論理的な説得（ロジック）よりも感情的な訴えかけ（パトス）が人の意思決定に強く影響を与えることを利用した高度なコミュニケーションです。また、「後悔回避バイアス」という、将来の自分の後悔を避けたいという強い心理的動機に働きかけます。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">この言葉の後に、「もしギリギリになってからだと、『もっと早くから楽にしてあげれば良かった』と、私は主治医としてきっと悔やむと思うんです」と理由を添えると、医師の真意が伝わり、自己都合ではなく患者を思う気持ちからであることが明確になります。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>このフレーズは、医師と患者の間に十分な信頼関係が築かれている場合に最も効果を発揮します。関係が浅い段階で使うと、「先生の都合でしょう」と反発を招くリスクがあります。患者が不快な表情を見せたら、すぐに「もちろん、一番は○○さんご自身に後悔してほしくない、という意味です」と患者視点の言葉に切り替えましょう。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 4,
+                scenario: "根治を目指した治療が奏功せず、これ以上の積極的治療は困難だと伝えました。患者さんはうつむき、「…もう、何もできることはないんですね」と絶望したように呟きました。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "治すことは難しいですが、痛みや症状を和らげる方法があります",
+                    "希望を持ちつつ、万が一に備えることも大切です",
+                    "そんなことありません。まだまだやれることはありますよ",
+                    "一緒に今後の目標を決めていきましょう"
+                ],
+                correctAnswer: 0,
+                explanation: {
+                    title: "フレーズ4：「治すことは難しいですが、痛みや症状を和らげる方法があります」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">これは「フレーミング効果」を巧みに利用した表現です。「もう治療法はない」というネガティブなフレームから、「症状を和らげる方法はある」というポジティブなフレームへと視点を転換させています。脳は、たとえ同じ状況であっても、提示されるフレームによって全く異なる感情や思考を生み出します。絶望の淵にいる人にとって、「まだできることがある」という情報は、思考の焦点を「失ったもの（治癒）」から「得られるもの（平穏な時間）」へとシフトさせ、心理的なパニック状態から抜け出すための重要な足がかりとなります。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「治す」から「和らげる」へのゴールシフトを明確に伝えることが重要です。「病気を治すことは難しい。でも、私たちは決して○○さんを見捨てません。これからは、あなたの生活の質を守るための治療に全力を尽くします」と、寄り添う姿勢を言葉と態度で示しましょう。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>「和らげる方法がある」と伝えた後、具体的にどのような方法があるのか（例：痛み止めの調整、吐き気止めの使用、精神的ケアなど）をすぐに提示できないと、口先だけだと思われてしまいます。具体的なケアプランを念頭に置いてからこの言葉を使いましょう。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 5,
+                scenario: "定期的な血液検査の結果を見ながら、患者さんが「このASTとかALTとか、数字がたくさんあってよく分かりません。私の体はどうなっているんですか？」と不安そうに尋ねました。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "これは体からのSOSサインです",
+                    "血液検査は体の状態を示すバロメーターです",
+                    "血液検査は体の通信簿のようなものです",
+                    "血液検査は体の健康診断書そのものです"
+                ],
+                correctAnswer: 2,
+                explanation: {
+                    title: "フレーズ5：「血液検査は体の通信簿のようなものです」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">「通信簿」というメタファーは、多くの人が経験したことのある馴染み深い概念であり、①複数の評価項目があること、②良い点も悪い点もあること、③努力次第で次回は改善できる可能性があること、という３つの要素を直感的に伝えます。これにより、患者は複雑な検査結果を「自分の体の各科目の成績」として整理しやすくなります。脳科学的には、既存の知識構造（スキーマ）に新しい情報をマッピングすることで、理解と記憶を促進する効果があります。また、「赤点」や「もう少し頑張りましょう」といった言葉は、深刻さを和らげつつも、改善すべき点があることを的確に伝えます。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「この肝臓の項目が、通信簿で言うと少し赤点ですね。でも、こちらの腎臓の項目は花マルがついていますよ」というように、良い点と悪い点を具体的に指摘すると、全体的なバランスが分かりやすくなり、患者さんの過度な落ち込みを防げます。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>非常に深刻な結果（例：末期的な数値の悪化）が出ている場合に、あまりに軽いノリで「通信簿」の比喩を使うと、不謹慎だと受け取られる可能性があります。その場合は、「今回は非常に重要な警告が書かれた通信簿です」と、比喩に重みを加えて深刻さを伝える工夫が必要です。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 6,
+                scenario: "病状が不安定な患者さんが、「奇跡を信じたい」と希望を語る一方で、延命措置の希望確認など、現実的な話し合いになると「縁起でもない」と避けてしまいます。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "希望を持ちつつ、万が一に備えることも大切です",
+                    "もしもの時のために、きちんと話し合っておくべきです",
+                    "一緒に今後の目標を決めていきましょう",
+                    "治すことは難しいですが、和らげる方法はあります"
+                ],
+                correctAnswer: 0,
+                explanation: {
+                    title: "フレーズ6：「希望を持ちつつ、万が一に備えることも大切です」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">これは「認知的不協和」を解消するための巧みな話法です。患者の脳内では「奇跡を信じたい（希望）」という認知と、「悪い事態も考えなければならない（現実）」という認知が対立し、強い心理的ストレス（不協和）を生んでいます。このフレーズは、まず「希望を持つこと」を肯定することで相手の認知を受け入れ、対立を和らげます。その上で、「備えること」を「希望を持つこと」と対立するものではなく、並行して行う「大切なこと」として提示します。これにより、患者は希望を捨てずに現実的な準備に向き合うことができ、認知的不協和が低減します。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「雨が降らないことを祈りながら、念のために傘を持っていくようなものですよ」という身近なたとえ話を使うと、「備え」が不吉なものではなく、賢明な準備であることが伝わりやすくなります。「最善を期待し、最悪に備える」というスタンスを共有しましょう。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>患者が「万が一」という言葉に過剰に反応し、不安を強める場合は、「決して悪い方向に行くと言っているわけではありません。ただ、先に話し合っておくことで、いざという時に慌てずに済み、○○さんのご希望を確実に守れるのです」と、準備をすることのメリットを強調する言い方に切り替えましょう。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 7,
+                scenario: "がんによる痛みが続いているにもかかわらず、患者さんが「痛み止めを飲むと、病気が悪くなった時に気づけないんじゃないか」と心配し、鎮痛薬の使用をためらっています。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "痛みは我慢しても良いことはありませんよ",
+                    "痛みは体の警報です。今の痛みは誤作動かもしれません",
+                    "この痛み止めは安全ですから、心配いりません",
+                    "痛みが強いと体力を消耗してしまいます"
+                ],
+                correctAnswer: 1,
+                explanation: {
+                    title: "フレーズ7：「痛みは体の警報です。今の痛みは誤作動かもしれません」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">これは「リフレーミング」という心理技法です。患者は「痛み＝危険を知らせる重要なサイン」というフレームで痛みを捉えています。このフレーズは、まずそのフレームを「痛みは警報」と肯定的に受け入れます。その上で、「原因が分かっているのに鳴り続ける警報＝誤作動」という新しいフレームを提示します。火事が起きていると分かっているのに鳴り響く火災報知器がただうるさいだけなのと同じように、今の痛みはもはや有益な情報ではなく、ただ苦痛なだけの「ノイズ」であると再定義するのです。このリフレーミングにより、患者は「痛みを消すこと」への罪悪感や不安から解放されます。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「原因がはっきりしているのですから、警報のボリュームを下げても大丈夫です。私たちが見張りをしていますから、何か新しい異常があれば必ず気づけます」と付け加えることで、医療者への信頼感を高め、患者の不安をさらに和らげることができます。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>「誤作動」という言葉が、「あなたの痛みは気のせいだ」と捉えられないよう注意が必要です。患者が不快そうな顔をしたら、「痛み自体は本物で、非常につらいものです。ただ、その痛みが知らせている危険は、私たちが既に把握しているものだ、という意味です」と、痛みの存在そのものは決して否定しないことを強調しましょう。痛みの原因が不明な急性痛の段階では絶対に使ってはいけません。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 8,
+                scenario: "複数回の化学療法を経て体力が落ちている患者さんが、「まだ他に試せる抗がん剤はありませんか？少しでも可能性があるならやりたい」と治療の継続を強く望んでいます。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "抗癌剤は諸刃の剣です",
+                    "もうこれ以上は体力が持ちません",
+                    "統計的に、この状況で効果が出る可能性は非常に低いです",
+                    "ご家族は別の治療を望んでいますよ"
+                ],
+                correctAnswer: 0,
+                explanation: {
+                    title: "フレーズ8：「抗癌剤は諸刃の剣です」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">「諸刃の剣」というメタファーは、利益（がんを攻撃する刃）と不利益（自分の体を傷つける刃）が不可分に結びついているという複雑な概念を、瞬時に伝えます。人間の意思決定は、単純なプラス・マイナスだけでなく、そのバランスによって大きく左右されます。この言葉は、患者の脳内で「抗がん剤＝良いもの」と単純化されていた思考に、「悪い側面もある」という認知を強制的に挿入します。これにより、治療の利益と不利益を天秤にかける、より冷静で客観的な思考（実行機能）を促すことができます。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「今の○○さんの体力でこの剣を振るうと、がん細胞に届く前に、ご自身の体力を削り切ってしまう可能性が高いのです」と、なぜ今その「剣」を使うべきではないのか、具体的な理由を添えて説明すると、患者さんは状況をより深く理解できます。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>この表現は、治療のデメリットを強調するため、抗がん剤の効果が十分に見込める早期の段階で使うと、患者に不必要な不安を与えてしまいます。効果と副作用のバランスが明らかに後者に傾いている、終末期に近い段階で慎重に使いましょう。慣用句に馴染みがない患者には、「良い効果も期待できますが、それと同じくらい大きな副作用という代償も伴う治療です」と平易な言葉で言い換えます。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 9,
+                scenario: "今後の治療方針について話し合おうとしたところ、患者さんが「先生にお任せします。先生が良いと思うようにしてください」と、意思決定を完全に委ねてきました。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "分かりました。では私から見て最善の治療法を提案します",
+                    "本当にそれでいいんですか？ご自身の体のことですよ",
+                    "一緒に今後の目標を決めていきましょう",
+                    "ご家族のご意見も伺ってから決めましょう"
+                ],
+                correctAnswer: 2,
+                explanation: {
+                    title: "フレーズ9：「一緒に今後の目標を決めていきましょう」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">「お任せします」という言葉の裏には、しばしば「どう決めていいか分からない」という思考のフリーズ状態があります。このフレーズは、「治療法を決める」という専門的で難しい問いから、「何を大切にしたいかという目標を決める」という個人的で答えやすい問いへと、思考のフレームを転換させます。脳科学的には、これは問題解決の焦点を、高度な分析的思考を要する前頭前野から、自己の価値観や感情を司る内側前頭前野や扁桃体へと移す効果があります。これにより、患者は自分の内面と向き合いやすくなり、意思決定への参加が促されます。また、「一緒に」という言葉が、孤独な決断ではないという安心感を与えます。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「ありがとうございます。では、私から治療の選択肢をいくつかお話ししますが、その前に、○○さんがこれから先、どんな時間を過ごしたいか、何を一番大切にしたいか、ぜひ教えてください。それを叶えるのが私たちの目標になります」と続けると、対話がスムーズに始まります。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>本当にすべてを委ねたいと強く願っている患者さんに対して、繰り返し決定を迫ると、かえって負担になります。その場合は、「分かりました。では私のお勧めをお話ししますので、それについてどう感じるか、少しだけご意見を聞かせてもらえますか？」と、参加のハードルを下げてあげましょう。</p>
+                    `
+                }
+            },
+            {
+                questionNumber: 10,
+                scenario: "あなたは症状緩和のために緩和ケアチームの介入を提案しました。しかし、患者さんは「緩和ケアなんて、まだそんな段階じゃないですよ」と、少し不快そうに抵抗を示しました。",
+                question: "この状況で、あなただったらどう説明しますか？",
+                options: [
+                    "緩和ケアは、元気なうちから利用する方が増えています",
+                    "緩和ケアはQOL（生活の質）を上げるための医療です",
+                    "このままだと症状がもっと辛くなりますよ",
+                    "ご家族は緩和ケアを希望されていますよ"
+                ],
+                correctAnswer: 0,
+                explanation: {
+                    title: "フレーズ10：「緩和ケアは、元気なうちから利用する方が増えています」",
+                    significance: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">心理学・脳科学的な意義</h3>
+                        <p class="mb-2">これは「社会的証明の原理」という、強力な心理的影響力を利用したアプローチです。人間は、特に不確実な状況下では、他者の行動を「正しい行動」の指標として判断する傾向があります。脳は、集団から孤立することを生存上のリスクと捉えるため、「みんながやっている」という情報は、その行動に対する不安や抵抗感を大幅に減少させます。「緩和ケア＝終末期」という個人的な思い込み（スキーマ）に対して、「最近の常識は違う」という社会的な事実を提示することで、スキーマの修正を促し、新しい行動（早期緩和ケアの受容）を取りやすくします。</p>
+                    `,
+                    advice: `
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">ワンポイントアドバイス</h3>
+                        <p class="mb-2">「実は、がんの治療と並行して、早いうちから緩和ケアを受けると、つらい症状が減るだけでなく、結果的に長生きできるというデータもあるんですよ」と、具体的なメリットを付け加えると、説得力がさらに増します。</p>
+                        <p class="font-bold text-red-600 mt-3">【注意点】</p>
+                        <p>「みんながやっているから」という同調圧力に反発を覚えるタイプの患者さんもいます。もし患者が不機嫌になった場合は、「もちろん、最終的に決めるのは○○さんご自身です。ただ、こういう選択肢が今は標準的になっている、という情報としてお伝えしました」と、あくまで情報提供であるというスタンスに切り替え、個人の意思を尊重する姿勢を見せることが重要です。</p>
+                    `
+                }
+            }
+        ];
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const finalScoreScreen = document.getElementById('final-score-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        
+        const questionNumberEl = document.getElementById('question-number');
+        const scenarioEl = document.getElementById('scenario');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        
+        const resultModal = document.getElementById('result-modal');
+        const modalContent = document.getElementById('modal-content');
+        const resultTitleEl = document.getElementById('result-title');
+        const explanationEl = document.getElementById('explanation');
+        const nextButton = document.getElementById('next-button');
+        const finalScoreEl = document.getElementById('final-score');
+
+        const showOptionsContainer = document.getElementById('show-options-container');
+        const showOptionsButton = document.getElementById('show-options-button');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.classList.add('hidden');
+            finalScoreScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = quizData[currentQuestionIndex];
+            questionNumberEl.textContent = `第${question.questionNumber}問`;
+            scenarioEl.innerHTML = question.scenario.replace(/\n/g, '<br>');
+            questionTextEl.textContent = question.question;
+            
+            optionsContainerEl.innerHTML = '';
+            optionsContainerEl.classList.add('hidden');
+            showOptionsContainer.classList.remove('hidden');
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('w-full', 'text-left', 'p-4', 'bg-slate-100', 'rounded-lg', 'hover:bg-cyan-100', 'transition-colors', 'border-2', 'border-transparent', 'focus:outline-none', 'focus:ring-2', 'focus:ring-cyan-500');
+                button.onclick = () => selectAnswer(index);
+                optionsContainerEl.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedIndex) {
+            const question = quizData[currentQuestionIndex];
+            const isCorrect = selectedIndex === question.correctAnswer;
+
+            if (isCorrect) {
+                score++;
+                resultTitleEl.textContent = '専門医はこう言っている';
+                resultTitleEl.className = 'text-3xl font-bold mb-4 text-green-600';
+            } else {
+                resultTitleEl.textContent = '残念！専門医はこう言っています';
+                resultTitleEl.className = 'text-3xl font-bold mb-4 text-red-600';
+            }
+            
+            let explanationHTML = `
+                <div class="bg-cyan-50 border-l-4 border-cyan-500 p-4 rounded-r-lg mb-6">
+                    <p class="font-bold text-lg text-cyan-800">${question.options[question.correctAnswer]}</p>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-2xl font-bold text-slate-900 border-b-2 border-cyan-500 pb-2">${question.explanation.title}</h3>
+                    <div>${question.explanation.significance}</div>
+                    <div class="bg-amber-50 p-4 rounded-lg mt-4">${question.explanation.advice}</div>
+                </div>
+            `;
+            explanationEl.innerHTML = explanationHTML;
+            
+            resultModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function handleNext() {
+            currentQuestionIndex++;
+            modalContent.classList.add('scale-95', 'opacity-0');
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            
+            setTimeout(() => {
+                resultModal.classList.add('hidden');
+                if (currentQuestionIndex < quizData.length) {
+                    showQuestion();
+                } else {
+                    showFinalScore();
+                }
+            }, 200);
+        }
+
+        function showFinalScore() {
+            quizScreen.classList.add('hidden');
+            finalScoreEl.textContent = `${score} / ${quizData.length}`;
+            finalScoreScreen.classList.remove('hidden');
+        }
+
+        startButton.addEventListener('click', startQuiz);
+        restartButton.addEventListener('click', startQuiz);
+        nextButton.addEventListener('click', handleNext);
+        showOptionsButton.addEventListener('click', () => {
+            showOptionsContainer.classList.add('hidden');
+            optionsContainerEl.classList.remove('hidden');
+        });
+    </script>
+
+</body>
+</html>
